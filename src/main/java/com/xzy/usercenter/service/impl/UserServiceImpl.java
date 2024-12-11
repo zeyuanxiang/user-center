@@ -1,5 +1,4 @@
 package com.xzy.usercenter.service.impl;
-import java.util.Date;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -67,6 +66,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return 0;
     }
 
+
+    /**
+     * 用户登录
+     * @param userAccount
+     * @param userPassword
+     * @param request
+     * @return
+     */
     @Override
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
 
@@ -116,4 +123,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
+    /**
+     * 用户脱敏
+     * @param originUser
+     * @return
+     */
+    @Override
+    public User getSafetyUser(User originUser) {
+        User user = new User();
+
+        user.setUserAccount(user.getUserAccount());
+        user.setUnionId(user.getUnionId());
+        user.setMpOpenId(user.getMpOpenId());
+        user.setUserName(user.getUserName());
+        user.setUserAvatar(user.getUserAvatar());
+        user.setUserProfile(user.getUserProfile());
+        user.setUserRole(user.getUserRole());
+        user.setCreateTime(user.getCreateTime());
+        user.setUpdateTime(user.getUpdateTime());
+        user.setIsDelete(user.getIsDelete());
+
+
+        return user;
+    }
 }
