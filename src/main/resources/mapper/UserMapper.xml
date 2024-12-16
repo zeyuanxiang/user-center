@@ -22,4 +22,21 @@
         userName,userAvatar,userProfile,
         userRole,createTime,updateTime,isDelete
     </sql>
+
+    <select id="searchUserListByName" parameterType="string" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"></include>
+        from user
+        <where>
+            <if test="userName != null and userName != ''" >
+                and userName = #{userName}
+            </if>
+        </where>
+    </select>
+    <select id="searchUserByUserName" resultType="com.xzy.usercenter.model.User"></select>
+    <select id="searchUserListWithPage" resultType="com.xzy.usercenter.model.User">
+        select
+            <include refid="Base_Column_List"></include>
+        from user
+    </select>
 </mapper>

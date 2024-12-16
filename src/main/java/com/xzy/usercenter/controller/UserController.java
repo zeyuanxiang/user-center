@@ -3,10 +3,12 @@ package com.xzy.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xzy.usercenter.model.User;
 import com.xzy.usercenter.model.request.UserLoginRequest;
 import com.xzy.usercenter.model.request.UserRegisterRequest;
 import com.xzy.usercenter.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 
 import static com.xzy.usercenter.constant.UserConstant.USER_LOGIN_STATE;
 
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -61,6 +64,14 @@ public class UserController {
 
     }
 
+    @PostMapping("/logout")
+    public boolean logout(HttpServletRequest request) {
+
+        if(null == request) {
+            log.info("request is null");
+        }
+        return userService.userLogOut(request);
+    }
     /**
      * 查询用户
      * @param userName
@@ -84,6 +95,12 @@ public class UserController {
         return userList;
     }
 
+    /**
+     * 删除用户
+     * @param id
+     * @param request
+     * @return
+     */
     @PostMapping("/delete")
     public boolean removeUser(@RequestParam("id") long id,HttpServletRequest request) {
         if(!isAdmin(request)) {
@@ -106,6 +123,30 @@ public class UserController {
             return true;
         }
         return false;
+    }
+
+
+    @GetMapping("/searchUserListByUserName")
+    private List<User> searchUserListByName(@RequestParam("userName") String userName) {
+        if(StringUtils.isBlank(userName)) {
+
+            return new ArrayList<>();
+        }
+        List<User> userList = userService.searchUserListByUserName(userName);
+        return userList;
+    }
+
+    @GetMapping("/searchUserListWithPage")
+    public Page<User> searchUserListWithPage(@RequestParam("pageNum") int pageNum,@RequestParam("pageSize") int pageSize) {
+        if(pageNum <= 0 || pageSize <= 0) {
+            log.info("pageNum:{},pageSize:{}", pageNum, pageSize);
+            return new Page<>();
+        }
+        Page<User> userPage = userService.searchUserListWithPage(pageNum, pageSize);
+        if (userPage == null) {
+            return new Page<>();
+        }
+        return userPage;
     }
 
 

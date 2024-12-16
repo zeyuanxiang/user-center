@@ -1,6 +1,7 @@
 package com.xzy.usercenter.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xzy.usercenter.model.User;
 
@@ -35,9 +36,25 @@ public interface UserService extends IService<User> {
     User userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
+     * 用户注销
+     * @param request
+     * @return
+     */
+    boolean userLogOut(HttpServletRequest request);
+
+    /**
      * 用户脱敏
      * @param originUser
      * @return
      */
     User getSafetyUser(User originUser);
+
+    /**
+     * 通过用户名字获取用户列表
+     * @param userName
+     * @return
+     */
+    List<User> searchUserListByUserName(String userName);
+
+    Page<User> searchUserListWithPage(int pageNum, int pageSize);
 }

@@ -1,6 +1,8 @@
 package com.xzy.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xzy.usercenter.mapper.UserMapper;
 import com.xzy.usercenter.model.User;
@@ -10,14 +12,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.xzy.usercenter.constant.UserConstant.USER_LOGIN_STATE;
 
 
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+
+    @Resource
+    private UserMapper userMapper;
 
     /**
      *  用户注册
@@ -116,10 +125,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         safetyUser.setUpdateTime(user.getUpdateTime());
         safetyUser.setIsDelete(0);
 
-        request.getSession().setAttribute("user", safetyUser);
+        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
 
 
         return safetyUser;
+    }
+
+    @Override
+    public boolean userLogOut(HttpServletRequest request) {
+        if (request == null){
+            log.info("request is null");
+        }
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return true;
     }
 
 
@@ -145,5 +163,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 
         return user;
+    }
+
+    @Override
+    public List<User> searchUserListByUserName(String userName) {
+        if(userName == null || StringUtils.isEmpty(userName)){
+            log.info("searchUserListByUserName userName is null");
+            return null;
+        }
+        List<User> userList = userMapper.searchUserListByName(userName);
+        if(userList == null){
+            log.info("data not found, userName={}", userName);
+        }
+        return userList;
+    }
+
+    @Override
+    public Page<User> searchUserListWithPage(int pageNum,int pageSize) {
+        if (pageNum < 1 || pageSize < 1) {
+            log.info("pageNum or pageSize can not < 1");
+            return null;
+        }
+        Page<User> page = new Page<>(pageNum, pageSize);
+       // List<User> userList = userMapper.searchUserListWithPage();
+        Page<User> userPage = userMapper.selectPage(page, null);
+        if (userPage == null) {
+            log.info("userPage is null");
+            return null;
+        }
+        return userPage;
     }
 }
