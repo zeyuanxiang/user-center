@@ -4,6 +4,8 @@ package com.xzy.usercenter.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xzy.usercenter.common.BaseResponse;
+import com.xzy.usercenter.common.ResultUtil;
 import com.xzy.usercenter.model.User;
 import com.xzy.usercenter.model.request.UserLoginRequest;
 import com.xzy.usercenter.model.request.UserRegisterRequest;
@@ -28,7 +30,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public Long register(@RequestBody UserRegisterRequest userRegisterRequest) {
+    public BaseResponse<Long> register(@RequestBody UserRegisterRequest userRegisterRequest) {
 
         if(null == userRegisterRequest) {
             return null;
@@ -42,12 +44,13 @@ public class UserController {
             return null;
         }
 
-        return userService.userRegister(userAccount,userPassword,checkPassword);
+        long res = userService.userRegister(userAccount, userPassword, checkPassword);
+        return ResultUtil.success(res);
 
     }
 
     @PostMapping("/login")
-    public User register(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public BaseResponse<User> register(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
 
         if(null == userLoginRequest) {
             return null;
@@ -60,17 +63,19 @@ public class UserController {
             return null;
         }
 
-        return userService.userLogin(userAccount,userPassword,request);
+        User user = userService.userLogin(userAccount, userPassword, request);
+        return ResultUtil.success(user);
 
     }
 
     @PostMapping("/logout")
-    public boolean logout(HttpServletRequest request) {
+    public BaseResponse<Boolean> logout(HttpServletRequest request) {
 
         if(null == request) {
             log.info("request is null");
         }
-        return userService.userLogOut(request);
+        boolean res = userService.userLogOut(request);
+        return ResultUtil.success(res);
     }
     /**
      * 查询用户
@@ -79,20 +84,20 @@ public class UserController {
      * @return
      */
     @GetMapping("/searchUserByName")
-    public List<User> searchUserByName(@RequestParam("userName") String userName, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUserByName(@RequestParam("userName") String userName, HttpServletRequest request) {
 
         if(!isAdmin(request)){
-            return new ArrayList<>();
+            return null;
         }
         if(StringUtils.isBlank(userName)) {
-            return new ArrayList<>();
+            return null;
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.like("userName", userName);
         List<User> userList = userService.list(queryWrapper);
         userList = userList.stream().map(user -> userService.getSafetyUser(user)
         ).collect(Collectors.toList());
-        return userList;
+        return ResultUtil.success(userList);
     }
 
     /**
@@ -102,14 +107,15 @@ public class UserController {
      * @return
      */
     @PostMapping("/delete")
-    public boolean removeUser(@RequestParam("id") long id,HttpServletRequest request) {
+    public BaseResponse<Boolean> removeUser(@RequestParam("id") long id,HttpServletRequest request) {
         if(!isAdmin(request)) {
-            return false;
+            return null;
         }
         if(id <= 0) {
-            return false;
+            return null;
         }
-        return userService.removeById(id);
+        boolean res = userService.removeById(id);
+        return ResultUtil.success(res);
     }
 
     private boolean isAdmin(HttpServletRequest request) {
@@ -127,26 +133,25 @@ public class UserController {
 
 
     @GetMapping("/searchUserListByUserName")
-    private List<User> searchUserListByName(@RequestParam("userName") String userName) {
+    private BaseResponse<List<User>> searchUserListByName(@RequestParam("userName") String userName) {
         if(StringUtils.isBlank(userName)) {
-
-            return new ArrayList<>();
+            return null;
         }
         List<User> userList = userService.searchUserListByUserName(userName);
-        return userList;
+        return ResultUtil.success(userList);
     }
 
     @GetMapping("/searchUserListWithPage")
-    public Page<User> searchUserListWithPage(@RequestParam("pageNum") int pageNum,@RequestParam("pageSize") int pageSize) {
+    public BaseResponse<Page<User>> searchUserListWithPage(@RequestParam("pageNum") int pageNum,@RequestParam("pageSize") int pageSize) {
         if(pageNum <= 0 || pageSize <= 0) {
             log.info("pageNum:{},pageSize:{}", pageNum, pageSize);
-            return new Page<>();
+            return null;
         }
         Page<User> userPage = userService.searchUserListWithPage(pageNum, pageSize);
         if (userPage == null) {
-            return new Page<>();
+            return null;
         }
-        return userPage;
+        return ResultUtil.success(userPage);
     }
 
 
