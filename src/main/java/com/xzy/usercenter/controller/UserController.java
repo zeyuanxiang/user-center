@@ -5,16 +5,22 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xzy.usercenter.common.BaseResponse;
+import com.xzy.usercenter.common.JsonUtil;
+import com.xzy.usercenter.common.RedisUtil;
 import com.xzy.usercenter.common.ResultUtil;
+import com.xzy.usercenter.http.CookieUtil;
 import com.xzy.usercenter.model.User;
 import com.xzy.usercenter.model.request.UserLoginRequest;
 import com.xzy.usercenter.model.request.UserRegisterRequest;
 import com.xzy.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +34,9 @@ public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     @PostMapping("/register")
     public BaseResponse<Long> register(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -50,7 +59,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public BaseResponse<User> register(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public BaseResponse<User> login(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 
         if(null == userLoginRequest) {
             return null;
@@ -64,17 +73,27 @@ public class UserController {
         }
 
         User user = userService.userLogin(userAccount, userPassword, request);
+        if (user != null) {
+            String sessionId = session.getId();
+            CookieUtil.writeCookie(response,sessionId);
+            redisUtil.set(sessionId, JsonUtil.obj2String(user),60*30);
+        }
         return ResultUtil.success(user);
 
     }
 
     @PostMapping("/logout")
-    public BaseResponse<Boolean> logout(HttpServletRequest request) {
+    public BaseResponse<Boolean> logout(HttpServletRequest request,HttpServletResponse response) {
 
         if(null == request) {
             log.info("request is null");
         }
         boolean res = userService.userLogOut(request);
+        if(res){
+            CookieUtil.delCookie(response,request);
+            String sessionId = CookieUtil.readUserLoginCookie(request);
+            redisUtil.del(sessionId);
+        }
         return ResultUtil.success(res);
     }
     /**
@@ -115,6 +134,22 @@ public class UserController {
             return null;
         }
         boolean res = userService.removeById(id);
+        return ResultUtil.success(res);
+    }
+
+    /**
+     * 修改用户信息
+     * @param user
+     * @return
+     */
+    private BaseResponse<Boolean> updateUser(@RequestBody User user,HttpServletRequest request) {
+        if(null == user) {
+            return null;
+        }
+        if(!isAdmin(request)){
+            return null;
+        }
+        boolean res = userService.updateById(user);
         return ResultUtil.success(res);
     }
 

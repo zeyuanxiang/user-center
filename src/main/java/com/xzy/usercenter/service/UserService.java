@@ -57,4 +57,6 @@ public interface UserService extends IService<User> {
     List<User> searchUserListByUserName(String userName);
 
     Page<User> searchUserListWithPage(int pageNum, int pageSize);
+
+
 }
